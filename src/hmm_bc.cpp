@@ -42,7 +42,6 @@ using namespace Rcpp;
 using namespace std;
 #define THRESH 200.0
 
-
 /**********************************************************************
  * 
  * est_hmm_bc
@@ -59,18 +58,23 @@ using namespace std;
  * tol_R        Tolerance for determining convergence
  * 
  *
+ * Adapted by Gabriel Gesteira and Cristiane Taniguti 
+ * on Jan 24th 2018 for BC2_RIL populations
+ *           
+ *
  **********************************************************************/
 
 /* Note: true genotypes coded as 1, 2, ...
    but in the alpha's and beta's, we use 0, 1, ... */
 
-RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
-  Rcpp::NumericMatrix geno = Rcpp::as<Rcpp::NumericMatrix>(geno_R);
+RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, SEXP freqs_R){
+  Rcpp::NumericMatrix geno = Rcpp::as<Rcpp::NumericMatrix>(geno_R); 
+  Rcpp::NumericMatrix freqs = Rcpp::as<Rcpp::NumericMatrix>(freqs_R); /* ENTERING EXPECTATION MATRIX */
   Rcpp::NumericVector rf = Rcpp::as<Rcpp::NumericVector>(rf_R);
   int verbose = Rcpp::as<int>(verbose_R);
   double tol = Rcpp::as<double>(tol_R);
-  int n_mar = geno.nrow();
-  int n_ind = geno.ncol();
+  int n_mar = geno.nrow(); /* Aren't rows the individuals? Yes, the matrix comes already transposed */
+  int n_ind = geno.ncol(); /* Aren't cols the markers? Yes, the matrix comes already transposed */
   int n_gen = 2;
   int it, i, v, v2, j, j2, flag=0, maxit=1000;
   double error_prob = 0.00001, s=0.0; 
@@ -79,7 +83,7 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
   NumericMatrix beta(n_gen, n_mar);
   NumericMatrix gamma(n_gen, n_gen);
   NumericVector cur_rf(n_mar-1);
-  NumericVector initf(2,0.5);
+  NumericVector initf = NumericVector::create(0.125,0.875); /* INIT PROBABILITY CHANGED */
 
   NumericMatrix tr(n_gen, (n_mar-1)*n_gen);
 
@@ -113,13 +117,12 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
       1. If one wants to test similar orders, it is not necessary to
       allocate space for all markers again This is quite complicate to
       program, but could save a lot of processing time 
-
       2. Consider genotyping errors for each marker in a similar way
       as was done for the trasition matrix
     */
     for(j=0; j < ((n_mar-1)*n_gen); j++){
       for(i=0; i<n_gen; i++){
-	tr(i,j)= stepf_bc(i+1, (j%n_gen)+1, cur_rf(j/n_gen));
+	tr(i,j)= stepf_bc(i+1, (j%n_gen)+1, cur_rf(j/n_gen), freqs); /* stepf_bc CHANGED IN THIS SCRIPT (BOTTOM) */
       }
     }
 
@@ -154,11 +157,12 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
 	}
 	for(v=0; v<n_gen; v++) {
 	  for(v2=0; v2<n_gen; v2++) {
-	    rf(j) += nrecf_bc(v+1,v2+1) * gamma(v,v2)/s;
+	    rf(j) += nrecf_bc(v+1,v2+1) * gamma(v,v2)/s; /* NEED CHANGE HERE? NO, JUST IN THE TRANSITION MATRIX*/
 	  }
 	}
       }
     } /* loop over individuals */
+
     /* rescale */
     for(j=0; j<n_mar-1; j++) {
       rf(j) /= (double)n_ind;
@@ -190,11 +194,11 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
     for(j=1; j<n_mar; j++) {
       for(v=0; v<n_gen; v++) {
 	alpha(v,j) = alpha(0,j-1) *
-	  stepf_bc(1, v+1, rf(j-1));
+	  stepf_bc(1, v+1, rf(j-1), freqs);
 
 	for(v2=1; v2<n_gen; v2++)
 	  alpha(v,j) = alpha(v,j) + alpha(v2,j-1) *
-	    stepf_bc(v2+1,v+1,rf(j-1));
+	    stepf_bc(v2+1,v+1,rf(j-1), freqs);
 	alpha(v,j) *= em(geno(j,i),v);
       }
     }
@@ -217,10 +221,18 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R){
   return(z);
 }
 
-double stepf_bc(int gen1, int gen2, double rf)
+double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
 {
-  if(gen1==gen2) return((1.0-rf));
-  else return(rf);
+int z2;
+  for (z2=0;z2<5000;z2++)
+  {
+    if ((freqs(z2,0)-rf) < 0.0001)
+      {
+        if(gen1==gen2) return(freqs(z2,1)+freqs(z2,4));
+        else if (gen1!=gen2) return(freqs(z2,2)+freqs(z2,3));
+      }
+    else return(0.5);
+  }
 }
 
 double nrecf_bc(int gen1, int gen2)
@@ -228,3 +240,4 @@ double nrecf_bc(int gen1, int gen2)
   if(gen1==gen2) return(0.0);
   else return(1.0);
 }
+
