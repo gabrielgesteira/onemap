@@ -20,12 +20,14 @@ Authors@R: c(person("Gabriel", "Margarido", role = "aut", email =
         "augusto.garcia@usp.br"))
 Author: Gabriel Margarido [aut], Marcelo Mollinari [aut], Karl
         Broman [ctb], Rodrigo Amadeu [ctb], Cristiane Taniguti [ctb, cre], Augusto Garcia [aut, ctb]
-LinkingTo: Rcpp (>= 0.10.5)
+LinkingTo: Rcpp (>= 0.10.5),
+          RcppArmadillo (>= 0.9.200.7.0)
 Depends: R (>= 3.4.0)
 Imports: ggplot2 (>= 2.2.1), 
         plotly (>= 4.7.1),
         reshape2 (>= 1.4.1), 
         Rcpp (>= 0.10.5),
+        RcppArmadillo (>= 0.9.200.7.0), 
         graphics, 
         methods, 
         stats, 
