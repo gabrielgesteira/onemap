@@ -115,12 +115,12 @@ map <- function(input.seq,tol=10E-5, verbose=FALSE)
       final.map<-est_map_hmm_bc(geno=t(get(input.seq$data.name, pos=1)$geno[,seq.num]),
                                 rf.vec=get_vec_rf_in(input.seq),
                                 verbose=verbose,
-                                tol=tol)
-      if(class(get(input.seq$data.name, pos=1))[2] == "riself" ||
-         class(get(input.seq$data.name, pos=1))[2] == "risib")
-          final.map$rf<-adjust_rf_ril(final.map$rf,
-                                      type=class(get(input.seq$data.name, pos=1))[2],
-                                      expand = FALSE)
+                                tol=tol, freqs=input.seq$freqs)
+#      if(class(get(input.seq$data.name, pos=1))[2] == "riself" ||
+#         class(get(input.seq$data.name, pos=1))[2] == "risib")
+#          final.map$rf<-adjust_rf_ril(final.map$rf,
+#                                      type=class(get(input.seq$data.name, pos=1))[2],
+#                                      expand = FALSE)
       return(structure(list(seq.num=seq.num,
                             seq.phases=seq.phases,
                             seq.rf=final.map$rf,
