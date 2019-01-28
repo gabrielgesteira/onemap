@@ -50,7 +50,7 @@ test_segregation_of_a_marker <- function(x, marker) {
     if(all(x$geno[,marker] ==0)) 
       stop(cat("Marker", marker, "do not have genotype information for any sample. We suggest to remove it from the dataset"))
     ## Segregation pattern for each marker type
-    p.a <- rep(1/4, 4); p.b <- c(1/4, 1/2, 1/4); p.c <- c(3/4, 1/4); p.d <- rep(1/2, 2)
+    p.a <- rep(1/4, 4); p.b <- c(1/4, 1/2, 1/4); p.c <- c(3/4, 1/4); p.d <- c(1/8, 7/8)
     ## Counting each category, removing missing data (coded as 0)
     count <- table(x$geno[,marker], exclude=0)
     ## Do the chisq test, using the appropriate expected segregation
@@ -85,7 +85,7 @@ test_segregation_of_a_marker <- function(x, marker) {
       if (is.element(1,x$geno[,marker])) c1 <- count[names(count)==1] else c1 <- 0
       if (is.element(3,x$geno[,marker])) c2 <- count[names(count)==3] else c2 <- 0
       qui <- chisq.test(as.vector(c(c1,c2)), p=p.d, correct = FALSE)
-      H0 <- "1:1"
+      H0 <- "1/8:7/8"
     }
     else if (grepl("A",x$segr.type[marker]) & class(x)[2]=="outcross") {
           if (is.element(1,x$geno[,marker])) c1 <- count[names(count)==1] else c1 <- 0
