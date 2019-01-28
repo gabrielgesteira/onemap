@@ -22,7 +22,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP est_hmm_bc(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP est_hmm_bc(SEXP, SEXP, SEXP, SEXP, SEXP);
 RcppExport SEXP est_hmm_f2(SEXP, SEXP, SEXP, SEXP);
 RcppExport SEXP est_hmm_out(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 RcppExport SEXP est_rf_bc_wrap(SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -32,7 +32,7 @@ RcppExport SEXP get_bins(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_onemap_twoptsbcril", (DL_FUNC) &_onemap_twoptsbcril, 5},
-    {"est_hmm_bc",          (DL_FUNC) &est_hmm_bc,          4},
+    {"est_hmm_bc",          (DL_FUNC) &est_hmm_bc,          5},
     {"est_hmm_f2",          (DL_FUNC) &est_hmm_f2,          4},
     {"est_hmm_out",         (DL_FUNC) &est_hmm_out,         6},
     {"est_rf_bc_wrap",      (DL_FUNC) &est_rf_bc_wrap,      5},

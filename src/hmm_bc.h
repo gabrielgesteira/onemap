@@ -56,6 +56,8 @@ using namespace std;
  * verbose_R    If TRUE print tracing information.
  *
  * tol_R        Tolerance for determining convergence
+ *
+ * freqs_R      Genotype frequency matrix
  * 
  *
  **********************************************************************/
