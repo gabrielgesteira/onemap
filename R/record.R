@@ -196,7 +196,9 @@ record<-function(input.seq, times=10, LOD=0, max.rf=0.5, tol=10E-5){
   }
     ## end of RECORD algorithm
     cat("\norder obtained using RECORD algorithm:\n\n", input.seq$seq.num[avoid_reverse(result.new)], "\n\ncalculating multipoint map using tol", tol, ".\n\n")
-    map(make_seq(get(input.seq$twopt),input.seq$seq.num[avoid_reverse(result.new)],twopt=input.seq$twopt), tol=tol)
+    obj_1 = make_seq(get(input.seq$twopt),input.seq$seq.num[avoid_reverse(result.new)],twopt=input.seq$twopt)
+    obj_1$freqs = input.seq$freqs
+    map(obj_1, tol=tol)
 }
 
 ##end of file

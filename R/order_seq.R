@@ -173,6 +173,7 @@ order_seq <- function(input.seq, n.init=5, subset.search=c("twopt", "sample"),
     ## in this case, only the 'compare' function is used
     cat("   Length of sequence ",deparse(substitute(input.seq))," is less than n.init \n   Returning the best order using compare function:\n")
     ifelse(length(input.seq$seq.num) == 2, seq.ord <- map(input.seq,tol=10E-5), seq.ord <- make_seq(compare(input.seq=input.seq,tol=10E-5),1))
+    seq.ord$freqs = input.seq$freqs
     seq.ord<-map(seq.ord, tol=10E-5)
     structure(list(ord=seq.ord, mrk.unpos=NULL, LOD.unpos=NULL, THRES=THRES,
                    ord.all=seq.ord, data.name=input.seq$data.name, twopt=input.seq$twopt), class = "order")
@@ -334,6 +335,8 @@ order_seq <- function(input.seq, n.init=5, subset.search=c("twopt", "sample"),
       }
     }
     cat("\nEstimating final genetic map using tol = 10E-5.\n\n")
+    input.seq2$freqs=input.seq$freqs
+    input.seq3$freqs=input.seq$freqs
     input.seq2<-map(input.seq2, tol=10E-5)
     input.seq3<-map(input.seq3, tol=10E-5)
     structure(list(ord=input.seq2, mrk.unpos=mrk.unpos, LOD.unpos=LOD.unpos, THRES=THRES,
