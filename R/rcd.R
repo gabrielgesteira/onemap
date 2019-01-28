@@ -158,7 +158,9 @@ rcd <-function(input.seq, LOD=0, max.rf=0.5, tol=10E-5)
     }
     ## end of chain
     cat("\norder obtained using RCD algorithm:\n\n", input.seq$seq.num[avoid_reverse(order)], "\n\ncalculating multipoint map using tol = ", tol, ".\n\n")
-    map(make_seq(get(input.seq$twopt),input.seq$seq.num[avoid_reverse(order)],twopt=input.seq$twopt), tol=tol)
+    obj_4_map = make_seq(get(input.seq$twopt),input.seq$seq.num[avoid_reverse(order)],twopt=input.seq$twopt)
+    obj_4_map$freqs = input.seq$freqs
+    map(obj_4_map, tol=tol)
 }
 ## end of file
 
