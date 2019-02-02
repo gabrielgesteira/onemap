@@ -96,6 +96,7 @@ mds_onemap <- function(input.seq, out.file= "out.file", mds.graph.file="NULL.pdf
       ord_mds <- match(as.character(mds_map$locimap[,2]), colnames(get(input.seq$data.name)$geno)) 
       seq_mds <- make_seq(get(input.seq$twopt), ord_mds)
       seq_mds$twopt <- input.seq$twopt
+      seq_mds$freqs = input.seq$freqs
       mds_map <- map(seq_mds)
     }
     structure(mds_map)

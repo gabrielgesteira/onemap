@@ -230,12 +230,29 @@ int z2;
   {
     if ((freqs(z2,0)-rf) < 0.0001)
       {
-        if(gen1==gen2) return(freqs(z2,1)+freqs(z2,4));
-        else if (gen1!=gen2) return(freqs(z2,2)+freqs(z2,3));
+        if((gen1==1) && (gen2==1)) return(freqs(z2,1)/(freqs(z2,1) + freqs(z2,2)));
+        else if ((gen1==1) && (gen2==2)) return(freqs(z2,2)/(freqs(z2,1)+freqs(z2,2)));
+        else if ((gen1==2) && (gen2==1)) return(freqs(z2,3)/(freqs(z2,3)+freqs(z2,4)));
+        else if ((gen1==2) && (gen2==2)) return(freqs(z2,4)/(freqs(z2,3)+freqs(z2,4)));
       }
     else return(0.5);
   }
 }
+
+// OLD CODE (considering the sums of homozigotes and heterozygotes)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5000;z2++)
+//   {
+//     if ((freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if(gen1==gen2) return(freqs(z2,1)+freqs(z2,4));
+//         else if (gen1!=gen2) return(freqs(z2,2)+freqs(z2,3));
+//       }
+//     else return(0.5);
+//   }
+// }
 
 double nrecf_bc(int gen1, int gen2)
 {
