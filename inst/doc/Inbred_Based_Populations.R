@@ -414,6 +414,32 @@ map_list_all <- list(LG1_f2_final, CHR1_final, LG2_f2_final, CHR3_final, CHR2_fi
 draw_map(map_list_all, names = TRUE, grid = TRUE, cex.mrk = 0.7)
 
 
+## ---- eval=FALSE, results='hide', eval=FALSE-----------------------------
+#  draw_map2(LG1_f2_final, LG2_f2_final, LG3_f2_final, main = "Only linkage information",
+#            group.names = c("LG1", "LG2", "LG3"))
+
+## ---- echo=FALSE, results='hide', echo=FALSE-----------------------------
+draw_map2(LG1_f2_final, LG2_f2_final, LG3_f2_final, main = "Only linkage information", 
+          group.names = c("LG1", "LG2", "LG3"), output = "map.png")
+
+## ---- results='hide', eval=FALSE-----------------------------------------
+#  draw_map2(LG1_f2_final, col.group = "#58A4B0", col.mark = "#335C81", output = "map_LG1.pdf")
+
+## ---- results='hide', echo=FALSE-----------------------------------------
+draw_map2(LG1_f2_final, col.group = "#58A4B0", col.mark = "#335C81", output = "map_LG1.png")
+
+## ---- results='hide', eval=FALSE-----------------------------------------
+#  draw_map2(LG1_f2_final, CHR1_final, LG2_f2_final, CHR3_final, CHR2_final, LG3_f2_final,
+#            tag = c("M18", "M59", "M38", "M47", "M1"),
+#            output = "map_all.pdf")
+#  
+
+## ---- results='hide', echo=FALSE-----------------------------------------
+draw_map2(LG1_f2_final, CHR1_final, LG2_f2_final, CHR3_final, CHR2_final, LG3_f2_final,
+          tag = c("M18", "M59", "M38", "M47", "M1"),
+          output = "map_all.png")
+
+
 ## ------------------------------------------------------------------------
 sessionInfo()
 

@@ -466,6 +466,38 @@ draw_map(CHR3_comp, names = TRUE, grid = TRUE, cex.mrk = 0.7)
 ## ------------------------------------------------------------------------
 draw_map(CHR1_final, names = TRUE, grid = TRUE, cex.mrk = 0.7)
 
+## ---- echo=TRUE, results='hide', eval=FALSE------------------------------
+#  draw_map2(LG1_final, LG2_final, LG3_final, main = "Only with linkage information",
+#            group.names = c("LG1", "LG2", "LG3"))
+
+## ---- echo=FALSE, results='hide'-----------------------------------------
+draw_map2(LG1_final, LG2_final, LG3_final, main = "Only with linkage information", 
+          group.names = c("LG1", "LG2", "LG3"), output = "map1.png")
+
+## ---- echo=TRUE, results='hide', eval=FALSE------------------------------
+#  draw_map2(CHR1_final, CHR2_final, CHR3_final, output= "map_ref.pdf",
+#            col.group = "#58A4B0",
+#           col.mark= "#335C81")
+
+## ---- echo=TRUE, results='hide', echo=FALSE------------------------------
+draw_map2(CHR1_final, CHR2_final, CHR3_final, output= "map_ref.png", 
+          col.group = "#58A4B0",
+         col.mark= "#335C81")
+
+## ---- results='hide', eval=FALSE-----------------------------------------
+#  draw_map2(LG1_final, CHR1_final, output = "map_comp.pdf", tag = c("M1","SNP2"))
+
+## ---- results='hide', echo=FALSE-----------------------------------------
+draw_map2(LG1_final, CHR1_final, output = "map_comp.png", tag = c("M1","SNP2"))
+
+## ---- results='hide', eval=FALSE-----------------------------------------
+#  draw_map2(LG2_final, CHR3_final, tag= c("SNP17", "SNP18", "M29"), main = "Chromosome 3",
+#            group.names = c("Only linkage", "With genome"), centered = TRUE, output = "map_comp2.pdf")
+
+## ---- results='hide', echo=FALSE-----------------------------------------
+draw_map2(LG2_final, CHR3_final, tag= c("SNP17", "SNP18", "M29"), main = "Chromosome 3", 
+          group.names = c("Only linkage", "With genome"), centered = TRUE, output = "map_comp2.png")
+
 ## ------------------------------------------------------------------------
 any_seq <- make_seq(twopts, c(30, 12, 3, 14, 2))
 (any_seq_map <- map(any_seq))
