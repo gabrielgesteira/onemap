@@ -113,7 +113,7 @@ map <- function(input.seq,tol=10E-5, verbose=FALSE)
           class(get(input.seq$data.name, pos=1))[2] == "risib")
   {
       final.map<-est_map_hmm_bc(geno=t(get(input.seq$data.name, pos=1)$geno[,seq.num]),
-                                rf.vec=get_vec_rf_in(input.seq),
+                                rf.vec=get_vec_rf_in(input.seq, acum = FALSE), #NEEDED TO PASS JUST RF
                                 verbose=verbose,
                                 tol=tol, freqs=input.seq$freqs)
 #      if(class(get(input.seq$data.name, pos=1))[2] == "riself" ||

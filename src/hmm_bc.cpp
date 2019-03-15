@@ -79,7 +79,7 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
   int n_ind = geno.ncol(); /* Aren't cols the markers? Yes, the matrix comes already transposed */
   int n_gen = 2;
   int it, i, v, v2, j, j2, flag=0, maxit=1000;
-  double error_prob = 0.00001, s=0.0; 
+  double error_prob = 0.05, s=0.0; // Changed error_prob from 0.00001 to 0.5
   double loglik, curloglik; 
   NumericMatrix alpha(n_gen, n_mar);
   NumericMatrix beta(n_gen, n_mar);
@@ -226,7 +226,7 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
 double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
 {
 int z2;
-  for (z2=0;z2<5000;z2++)
+  for (z2=0;z2<5001;z2++)
   {
     if (abs(freqs(z2,0)-rf) < 0.0001)
       {
