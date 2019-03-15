@@ -71,13 +71,13 @@ draw_map2<-function(...,tag=NULL,id=TRUE,pos =TRUE,cex.label=NULL,main=NULL,grou
   }
   data.name<-data.name[!duplicated(data.name)]
   if(F %in% (data.name%in%ls(envir=.GlobalEnv))) stop(paste("Object(s) data not found:",paste("'",data.name[!data.name%in%ls()],"'",collapse = " ",sep = "")))
-  data<-list()
-  for(i in seq_along(data.name)) data[[i]]<-get(data.name[i])
-  data<-setNames(data,as.list(data.name))
+  data_dmp2<-list()
+  for(i in seq_along(data.name)) data_dmp2[[i]]<-get(data.name[i])
+  data_dmp2<-setNames(data_dmp2,as.list(data.name))
   ## for(i in seq_along(data)) if(!"onemap"%in%class(data[[i]])) stop(paste("'",names(data)[i],"' is not an object of class 'onemap'",sep=""))
   
   dmaps <- list()
-  for(i in seq_along(map.data)) dmaps[[i]] <-data.frame(mark=colnames(data[[map.data[[i]]$data.name]]$geno)[map.data[[i]]$seq.num], pos=c(0,cumsum(kosambi(map.data[[i]]$seq.rf))), chr=i)
+  for(i in seq_along(map.data)) dmaps[[i]] <-data.frame(mark=colnames(data_dmp2[[map.data[[i]]$data.name]]$geno)[map.data[[i]]$seq.num], pos=c(0,cumsum(kosambi(map.data[[i]]$seq.rf))), chr=i)
   nchr<-length(dmaps)
   max.pos<-ceiling(max(do.call("rbind",dmaps)$pos)/10)*10
   for(i in seq_along(dmaps))dmaps[[i]]$coord<--dmaps[[i]]$pos*100/max.pos
@@ -100,7 +100,7 @@ draw_map2<-function(...,tag=NULL,id=TRUE,pos =TRUE,cex.label=NULL,main=NULL,grou
   if(is.null(col.mark)) col.mark<-"#cc662f"
   if(is.null(col.tag)) col.tag<-"#003350"
   if(is.null(output)) output<-"map"
-  if("all"%in%tag) tag<-unlist(lapply(data,function(x) colnames(x$geno)))
+  if("all"%in%tag) tag<-unlist(lapply(data_dmp2,function(x) colnames(x$geno)))
   
   # Split output
   if(strsplit(output,"")[[1]][length(strsplit(output,"")[[1]])]=="/") output<-paste(output,"map",sep = "")
