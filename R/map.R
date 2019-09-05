@@ -126,7 +126,8 @@ map <- function(input.seq,tol=10E-5, verbose=FALSE)
                             seq.rf=final.map$rf,
                             seq.like=final.map$loglike,
                             data.name=input.seq$data.name,
-                            twopt=input.seq$twopt), class = "sequence"))
+                            twopt=input.seq$twopt,
+                            gammasf=final.map$gammasf), class = "sequence"))
   }
 
     if((seq.phases == -1) && (seq.rf == -1) && is.null(seq.like)) {

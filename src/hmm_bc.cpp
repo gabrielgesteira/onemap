@@ -79,8 +79,9 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
   int n_ind = geno.ncol(); /* Aren't cols the markers? Yes, the matrix comes already transposed */
   int n_gen = 2;
   int it, i, v, v2, j, j2, flag=0, maxit=1000;
-  double error_prob = 0.05, s=0.0; // Changed error_prob from 0.00001 to 0.5
+  double error_prob = 0.05, s=0.0; // Changed error_prob from 0.00001 to 0.05
   double loglik, curloglik; 
+  NumericMatrix gammasf(n_mar*n_gen,n_ind*n_gen); // Handling genotype probabilities
   NumericMatrix alpha(n_gen, n_mar);
   NumericMatrix beta(n_gen, n_mar);
   NumericMatrix gamma(n_gen, n_gen);
@@ -162,6 +163,32 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
 	    rf(j) += nrecf_bc(v+1,v2+1) * gamma(v,v2)/s; /* NEED CHANGE HERE? NO, JUST IN THE TRANSITION MATRIX*/
 	  }
 	}
+	// Saving gammas for all individuals and markers
+	if (i == 0){
+	  if (j == 0){
+	    gammasf(j,i) = gamma(0,0);
+	    gammasf(j,i+1) = gamma(0,1);
+	    gammasf(j+1,i) = gamma(1,0);
+	    gammasf(j+1,i+1) = gamma(1,1);
+	  } else {
+	    gammasf(2*j-1,i) = gamma(0,0);
+	    gammasf(2*j-1,i+1) = gamma(0,1);
+	    gammasf(2*j,i) = gamma(1,0);
+	    gammasf(2*j,i+1) = gamma(1,1);
+	  }
+	} else {
+	  if (j == 0){
+	    gammasf(j,2*i-1) = gamma(0,0);
+	    gammasf(j,2*i) = gamma(0,1);
+	    gammasf(j+1,2*i-1) = gamma(1,0);
+	    gammasf(j+1,2*i) = gamma(1,1);
+	  } else {
+	    gammasf(2*j-1,2*i-1) = gamma(0,0);
+	    gammasf(2*j-1,2*i) = gamma(0,1);
+	    gammasf(2*j,2*i-1) = gamma(1,0);
+	    gammasf(2*j,2*i) = gamma(1,1);
+	  }
+	}
       }
     } /* loop over individuals */
 
@@ -183,7 +210,7 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
   } /* end EM algorithm */
 
   //if(flag) warning("Didn't converge!\n");
-
+Rcpp::Rcout << "Number of iterations to converge: " << it+1 << "\n";
   // calculate log likelihood
   loglik = 0.0;
   
@@ -219,10 +246,11 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
     Rprintf(" loglike: %10.4lf\n\n", loglik);
   }  
 
-  List z = List::create(wrap(rf), wrap(loglik));
+  List z = List::create(wrap(rf), wrap(loglik), wrap(gammasf));
   return(z);
 }
 
+// STEPF_BC CHANGED TOO
 double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
 {
 int z2;

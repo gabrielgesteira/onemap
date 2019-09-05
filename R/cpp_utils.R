@@ -126,7 +126,7 @@ est_map_hmm_bc<-function(geno, rf.vec=NULL, verbose=TRUE, tol=1e-6, freqs)
              as.numeric(tol),
 	     freqs,
              PACKAGE = "onemap" )
-    names(r)<-c("rf", "loglike")
+    names(r)<-c("rf", "loglike", "gammasf")
     return(r)
 }
 
