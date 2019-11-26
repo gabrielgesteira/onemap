@@ -280,12 +280,14 @@ order_seq <- function(input.seq, n.init=5, subset.search=c("twopt", "sample"),
     seq.ord <- compare(input.seq=make_seq(get(input.seq$twopt), seq.init, twopt=input.seq$twopt), n.best=50)
 
     ## 'try' to map remaining markers
-    input.seq2 <- make_seq(seq.ord,1)
+      input.seq2 <- make_seq(seq.ord,1)
+      input.seq2$freqs = input.seq$freqs
     cat ("\n\nRunning try algorithm\n")
     for (i in (n.init+1):length(input.seq$seq.num)){
       seq.ord <- try_seq(input.seq2,input.seq$seq.num[seq.work[i]],tol=tol)
       if(all(seq.ord$LOD[-which(seq.ord$LOD==max(seq.ord$LOD))[1]] < -THRES))
-        input.seq2 <- make_seq(seq.ord,which.max(seq.ord$LOD))
+          input.seq2 <- make_seq(seq.ord,which.max(seq.ord$LOD))
+      input.seq2$freqs = input.seq$freqs
     }
 
     ## markers that do not meet the threshold remain unpositioned
@@ -300,7 +302,8 @@ order_seq <- function(input.seq, n.init=5, subset.search=c("twopt", "sample"),
       for (i in mrk.unpos) {
         seq.ord <- try_seq(input.seq2,i,tol=tol)
         if(all(seq.ord$LOD[-which(seq.ord$LOD==max(seq.ord$LOD))[1]] < (-THRES+1)))
-          input.seq2 <- make_seq(seq.ord,which.max(seq.ord$LOD))
+            input.seq2 <- make_seq(seq.ord,which.max(seq.ord$LOD))
+        input.seq2$freqs = input.seq$freqs
       }
 
       ## markers that do not meet this second threshold still remain unpositioned
@@ -332,6 +335,7 @@ order_seq <- function(input.seq, n.init=5, subset.search=c("twopt", "sample"),
       for (i in mrk.unpos[which.order]) {
         seq.ord <- try_seq(input.seq3,i,tol)
         input.seq3 <- make_seq(seq.ord,which(seq.ord$LOD==0)[sample(sum(seq.ord$LOD==0))[1]])
+        input.seq3$freqs = input.seq$freqs
       }
     }
     cat("\nEstimating final genetic map using tol = 10E-5.\n\n")

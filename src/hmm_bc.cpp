@@ -71,23 +71,25 @@ using namespace std;
 
 RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, SEXP freqs_R){
   Rcpp::NumericMatrix geno = Rcpp::as<Rcpp::NumericMatrix>(geno_R); 
-  Rcpp::NumericMatrix freqs = Rcpp::as<Rcpp::NumericMatrix>(freqs_R); /* ENTERING EXPECTATION MATRIX */
+  Rcpp::NumericMatrix freqs = Rcpp::as<Rcpp::NumericMatrix>(freqs_R); /* MATRIX OF EXPECTED FREQUENCIES */
   Rcpp::NumericVector rf = Rcpp::as<Rcpp::NumericVector>(rf_R);
   int verbose = Rcpp::as<int>(verbose_R);
   double tol = Rcpp::as<double>(tol_R);
   int n_mar = geno.nrow(); /* Aren't rows the individuals? Yes, the matrix comes already transposed */
   int n_ind = geno.ncol(); /* Aren't cols the markers? Yes, the matrix comes already transposed */
   int n_gen = 2;
-  int it, i, v, v2, j, j2, flag=0, maxit=1000;
+  int it, i, v, v2, j, j2, flag=0, maxit=2000;
   double error_prob = 0.05, s=0.0; // Changed error_prob from 0.00001 to 0.05
-  double loglik, curloglik; 
-  NumericMatrix gammasf(n_mar*n_gen,n_ind*n_gen); // Handling genotype probabilities
+  double loglik, curloglik, prob1, prob2; 
+  NumericMatrix gammasf(n_mar, n_ind); // Handling genotype probabilities
   NumericMatrix alpha(n_gen, n_mar);
   NumericMatrix beta(n_gen, n_mar);
   NumericMatrix gamma(n_gen, n_gen);
   NumericVector cur_rf(n_mar-1);
   NumericVector initf = NumericVector::create(0.125,0.875); /* INIT PROBABILITY CHANGED */
-
+  // NumericVector initf = NumericVector::create(0.875,0.125); /* INIT PROBABILITY CHANGED 2 */
+  // NumericVector initf = NumericVector::create(0.5,0.5); /* INIT PROBABILITY */
+  
   NumericMatrix tr(n_gen, (n_mar-1)*n_gen);
 
   NumericMatrix em(4,2);
@@ -164,32 +166,41 @@ RcppExport SEXP est_hmm_bc(SEXP geno_R, SEXP rf_R, SEXP verbose_R, SEXP tol_R, S
 	  }
 	}
 	// Saving gammas for all individuals and markers
-	if (i == 0){
-	  if (j == 0){
-	    gammasf(j,i) = gamma(0,0);
-	    gammasf(j,i+1) = gamma(0,1);
-	    gammasf(j+1,i) = gamma(1,0);
-	    gammasf(j+1,i+1) = gamma(1,1);
-	  } else {
-	    gammasf(2*j-1,i) = gamma(0,0);
-	    gammasf(2*j-1,i+1) = gamma(0,1);
-	    gammasf(2*j,i) = gamma(1,0);
-	    gammasf(2*j,i+1) = gamma(1,1);
-	  }
-	} else {
-	  if (j == 0){
-	    gammasf(j,2*i-1) = gamma(0,0);
-	    gammasf(j,2*i) = gamma(0,1);
-	    gammasf(j+1,2*i-1) = gamma(1,0);
-	    gammasf(j+1,2*i) = gamma(1,1);
-	  } else {
-	    gammasf(2*j-1,2*i-1) = gamma(0,0);
-	    gammasf(2*j-1,2*i) = gamma(0,1);
-	    gammasf(2*j,2*i-1) = gamma(1,0);
-	    gammasf(2*j,2*i) = gamma(1,1);
-	  }
-	}
+	// if (i == 0){
+	//   if (j == 0){
+	//     gammasf(j,i) = gamma(0,0);
+	//     gammasf(j,i+1) = gamma(0,1);
+	//     gammasf(j+1,i) = gamma(1,0);
+	//     gammasf(j+1,i+1) = gamma(1,1);
+	//   } else {
+	//     gammasf(2*j-1,i) = gamma(0,0);
+	//     gammasf(2*j-1,i+1) = gamma(0,1);
+	//     gammasf(2*j,i) = gamma(1,0);
+	//     gammasf(2*j,i+1) = gamma(1,1);
+	//   }
+	// } else {
+	//   if (j == 0){
+	//     gammasf(j,2*i-1) = gamma(0,0);
+	//     gammasf(j,2*i) = gamma(0,1);
+	//     gammasf(j+1,2*i-1) = gamma(1,0);
+	//     gammasf(j+1,2*i) = gamma(1,1);
+	//   } else {
+	//     gammasf(2*j-1,2*i-1) = gamma(0,0);
+	//     gammasf(2*j-1,2*i) = gamma(0,1);
+	//     gammasf(2*j,2*i-1) = gamma(1,0);
+	//     gammasf(2*j,2*i) = gamma(1,1);
+	//   }
+	// }
+
       }
+      
+      // accounting for probabilities of each marker for each individual
+      for(j=0, s=0.0, prob1=0.0, prob2=0.0; j<n_mar; j++){
+        prob1 = alpha(0,j) * beta(0,j);
+        prob2 = alpha(1,j) * beta(1,j);
+        gammasf(j,i) = prob1/(prob1 + prob2); // Just passing p(AA), so p(BB) = 1 - p(AA)
+      }
+      
     } /* loop over individuals */
 
     /* rescale */
@@ -250,7 +261,24 @@ Rcpp::Rcout << "Number of iterations to converge: " << it+1 << "\n";
   return(z);
 }
 
-// STEPF_BC CHANGED TOO
+// // STEPF_BC CHANGED (first attempt: considering separated probabilities)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5001;z2++)
+//   {
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if((gen1==1) && (gen2==1)) return(freqs(z2,1)/(freqs(z2,1) + freqs(z2,2)));
+//         else if ((gen1==1) && (gen2==2)) return(freqs(z2,2)/(freqs(z2,1)+freqs(z2,2)));
+//         else if ((gen1==2) && (gen2==1)) return(freqs(z2,3)/(freqs(z2,3)+freqs(z2,4)));
+//         else if ((gen1==2) && (gen2==2)) return(freqs(z2,4)/(freqs(z2,3)+freqs(z2,4)));
+//       }
+//     // else return(0.5);
+//   }
+// }
+
+// STEPF_BC CHANGED (last attempt: considering separated probabilities)
 double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
 {
 int z2;
@@ -258,28 +286,153 @@ int z2;
   {
     if (abs(freqs(z2,0)-rf) < 0.0001)
       {
-        if((gen1==1) && (gen2==1)) return(freqs(z2,1)/(freqs(z2,1) + freqs(z2,2)));
-        else if ((gen1==1) && (gen2==2)) return(freqs(z2,2)/(freqs(z2,1)+freqs(z2,2)));
-        else if ((gen1==2) && (gen2==1)) return(freqs(z2,3)/(freqs(z2,3)+freqs(z2,4)));
-        else if ((gen1==2) && (gen2==2)) return(freqs(z2,4)/(freqs(z2,3)+freqs(z2,4)));
+        if((gen1==1) && (gen2==1)) return((freqs(z2,1)/(freqs(z2,1) + freqs(z2,2)))/(1+(2*freqs(z2,0))));
+        else if ((gen1==1) && (gen2==2)) return((freqs(z2,2)/(freqs(z2,1)+freqs(z2,2)))/(1+(2*freqs(z2,0))));
+        else if ((gen1==2) && (gen2==1)) return((freqs(z2,3)/(freqs(z2,3)+freqs(z2,4)))/(1+(2*freqs(z2,0))));
+        else return((freqs(z2,4)/(freqs(z2,3)+freqs(z2,4)))/(1+(2*freqs(z2,0))));
       }
-    // else return(0.5);
   }
 }
 
-// OLD CODE (considering the sums of homozigotes and heterozygotes)
+
+// // STEPF_BC CHANGED (second attempt: considering "joint" probabilities)
 // double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
 // {
 // int z2;
 //   for (z2=0;z2<5000;z2++)
 //   {
-//     if ((freqs(z2,0)-rf) < 0.0001)
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
 //       {
 //         if(gen1==gen2) return(freqs(z2,1)+freqs(z2,4));
-//         else if (gen1!=gen2) return(freqs(z2,2)+freqs(z2,3));
+//         else return(freqs(z2,2)+freqs(z2,3));
 //       }
-//     else return(0.5);
 //   }
+// }
+
+// // STEPF_BC CHANGED (third attempt: considering just 1-rf and rf)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if(gen1==gen2) return((1.0-rf));
+//   else return(rf);
+// }
+
+// // STEPF_BC CHANGED (fourth attempt: considering expected differences)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if(gen1==gen2) return(((rf+2)*(rf+2))/(((rf+2)*(rf+2))+(rf*(rf-4))));
+//   else return((rf*(rf-4))/(((rf+2)*(rf+2))+(rf*(rf-4))));
+// }
+
+// // STEPF_BC CHANGED (fifth attempt: considering separated probabilities 2)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5001;z2++)
+//   {
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if((gen1==1) && (gen2==1)) return(((1-rf)*(1-rf))/(4*((2*rf)+1)));
+//         else if ((gen1==1) && (gen2==2)) return(-(rf*(rf-4))/(4*((2*rf)+1)));
+//         else if ((gen1==2) && (gen2==1)) return(-(rf*(rf-4))/(4*((2*rf)+1)));
+//         else if ((gen1==2) && (gen2==2)) return(((rf*rf)+(10*rf)+7)/(4*((2*rf)+1)));
+//       }
+//     // else return(0.5);
+//   }
+// }
+
+// // STEPF_BC CHANGED (sixth attempt: considering expected differences 2)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if(gen1==gen2) return(1-((rf*(rf-4))/(4*((2*rf)+1))));
+//   else return((rf*(rf-4))/(4*((2*rf)+1)));
+// }
+
+// // STEPF_BC CHANGED (seventh attempt: considering separated probabilities 3)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5001;z2++)
+//   {
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if((gen1==1) && (gen2==1)) return((((1-rf)*(1-rf))/(8*((2*rf)+1)))/((((1-rf)*(1-rf))/(8*((2*rf)+1)))+(-(rf*(rf-4))/(8*((2*rf)+1)))));
+//         else if ((gen1==1) && (gen2==2)) return((-(rf*(rf-4))/(8*((2*rf)+1)))/((((1-rf)*(1-rf))/(8*((2*rf)+1)))+(-(rf*(rf-4))/(8*((2*rf)+1)))));
+//         else if ((gen1==2) && (gen2==1)) return((-(rf*(rf-4))/(8*((2*rf)+1)))/((-(rf*(rf-4))/(8*((2*rf)+1)))+(((rf*rf)+(10*rf)+7)/(8*((2*rf)+1)))));
+//         else if ((gen1==2) && (gen2==2)) return((((rf*rf)+(10*rf)+7)/(8*((2*rf)+1)))/((-(rf*(rf-4))/(8*((2*rf)+1)))+(((rf*rf)+(10*rf)+7)/(8*((2*rf)+1)))));
+//       }
+//     // else return(0.5);
+//   }
+// }
+
+// // STEPF_BC CHANGED (eighth attempt: considering separated probabilities 4)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5001;z2++)
+//   {
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if((gen1==gen2)) return(((2*((1-rf)*(1-rf)))/(8*((2*rf)+1))));
+//         else return((-(2*rf*(rf-4))/(8*((2*rf)+1))));
+//       }
+//     // else return(0.5);
+//   }
+// }
+
+// // STEPF_BC CHANGED (nineth attempt: considering separated probabilities 5)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+// int z2;
+//   for (z2=0;z2<5001;z2++)
+//   {
+//     if (abs(freqs(z2,0)-rf) < 0.0001)
+//       {
+//         if((gen1==gen2)) return((2*((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))/((2*((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+(((-rf)*(-rf))+((3*rf)/2)))+((-rf)*(-rf))+((3*rf)/2)+(2*(rf*(1-rf)*(1-rf))))));
+//         else return((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*(1-rf)*(1-rf))))/((2*((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+(((-rf)*(-rf))+((3*rf)/2)))+((-rf)*(-rf))+((3*rf)/2)+(2*(rf*(1-rf)*(1-rf))))));
+//       }
+//     // else return(0.5);
+//   }
+// }
+
+// // STEPF_BC CHANGED (nineth attempt: considering separated probabilities 5) <- USED TO INSERT FINAL MARKERS
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//         if((gen1==gen2)) return((((1-rf)*(1-rf)*(1-rf))+((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))/((((1-rf)*(1-rf)*(1-rf))+((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))+(((-rf)*(-rf))+((3*rf)/2)+((rf*((1-rf)*(1-rf)))+(rf*((1-rf)*(1-rf)))))));
+//         else return((((-rf)*(-rf))+((3*rf)/2)+((rf*((1-rf)*(1-rf)))+(rf*((1-rf)*(1-rf)))))/((((1-rf)*(1-rf)*(1-rf))+((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))+(((-rf)*(-rf))+((3*rf)/2)+((rf*((1-rf)*(1-rf)))+(rf*((1-rf)*(1-rf)))))));
+// }
+
+// // STEPF_BC CHANGED (tenth attempt: considering separated probabilities 5)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if((gen1==1) & (gen2==1)) return((((1-rf)*(1-rf)*(1-rf)))/(((1-rf)*(1-rf)*(1-rf))+((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)));
+//   else if((gen1==1) & (gen2==2)) return(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)/(((1-rf)*(1-rf)*(1-rf))+((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)));
+//   else if((gen1==2) & (gen2==1)) return(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)/(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2) + (((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))));
+//   else if ((gen1==2) & (gen2==2)) return((((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))/(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2) + (((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))));
+// }
+
+
+// // STEPF_BC CHANGED (tenth attempt: considering separated probabilities 5)
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if((gen1==1) & (gen2==1)) return((((1-rf)*(1-rf)*(1-rf)))/(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)+(((1-rf)*(1-rf)*(1-rf)))));
+//   else if((gen1==1) && (gen2==2)) return(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)/(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)+(((1-rf)*(1-rf)*(1-rf)))));
+//   else if((gen1==2) && (gen2==1)) return(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)/(((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)+(((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))));
+//   else if ((gen1==2) && (gen2==2)) return((((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))/((((1-rf)*(1-rf)*(1-rf))+(((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))+((((-rf)*(-rf))+((3*rf)/2)+(2*(rf*((1-rf)*(1-rf)))))/2)));
+// }
+
+// // STEPF_BC CHANGED (eleventh attempt: considering summarized probabilities) <- DIDN'T WORK
+// double stepf_bc(int gen1, int gen2, double rf, Rcpp::NumericMatrix freqs)
+// {
+//   if((gen1==gen2)) return(((2*((1-rf)*(1-rf)*(1/(1+(2*rf)))))+
+//                            (((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))/
+//                           (((2*((1-rf)*(1-rf)*(1/(1+(2*rf)))))+
+//                            (((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))+
+//                            (((-rf)*(-rf))+((3*rf)/2)+(2*((1-rf)*(1-rf)*(2*rf/(1+(2*rf))))))));
+        
+//   else return((((-rf)*(-rf))+((3*rf)/2)+(2*((1-rf)*(1-rf)*(2*rf/(1+(2*rf))))))/
+//                           (((2*((1-rf)*(1-rf)*(1/(1+(2*rf)))))+
+//                            (((1-rf)*(1-rf))+1+((-rf)*(-rf))+((3*rf)/2)))+
+//                            (((-rf)*(-rf))+((3*rf)/2)+(2*((1-rf)*(1-rf)*(2*rf/(1+(2*rf))))))));
 // }
 
 double nrecf_bc(int gen1, int gen2)
@@ -287,4 +440,3 @@ double nrecf_bc(int gen1, int gen2)
   if(gen1==gen2) return(0.0);
   else return(1.0);
 }
-

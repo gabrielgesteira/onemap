@@ -150,19 +150,23 @@ try_seq_inbred <- function(input.seq,mrk,tol=10E-2,pos= NULL,verbose=FALSE)
   num.max<-nchar(ncol(get(input.seq$data.name, pos=1)$geno))
   ## create first order
   try.ord <- c(mrk,input.seq$seq.num)
+  freqs = input.seq$freqs  
   if(verbose) cat("TRY", 1,": ", c(mrk,input.seq$seq.num),"\n")
   else cat(format(mrk,width=num.max) , "-->", format(colnames(get(input.seq$data.name, pos=1)$geno)[mrk], width=mark.max), ": .")
   utils::flush.console()
   seq.temp<-make_seq(get(input.seq$twopt), arg=try.ord)
-  seq.temp$twopt<-input.seq$twopt
-  rf.temp<-get_vec_rf_in(seq.temp, acum=FALSE)
-  ## estimate parameters for all possible linkage phases for this order
-  final.map<-est_map_hmm_f2(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord]),
-                            rf.vec=rf.temp,
-                            verbose=FALSE,
-                            tol=tol)
-  ord.rf[1,] <- final.map$rf
-  ord.like[1] <- final.map$loglike
+  ## seq.temp$twopt<-input.seq$twopt
+  seq.temp$freqs = freqs  
+  ## rf.temp<-get_vec_rf_in(seq.temp, acum=FALSE)
+  ## ## estimate parameters for all possible linkage phases for this order
+  ## final.map<-est_map_hmm_bc(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord]),
+  ##                           rf.vec=rf.temp,
+  ##                           verbose=FALSE,
+  ##                           tol=tol,
+  ##                           freqs=freqs)
+  final.map = map(seq.temp)  
+  ord.rf[1,] <- final.map$seq.rf
+  ord.like[1] <- final.map$seq.like
 
   ## positioning between markers of the given sequence
   for(i in 1:(length(input.seq$seq.num)-1))
@@ -177,15 +181,18 @@ try_seq_inbred <- function(input.seq,mrk,tol=10E-2,pos= NULL,verbose=FALSE)
     else cat(".")
     utils::flush.console()
     seq.temp<-make_seq(get(input.seq$twopt), arg=try.ord[i+1,])
-    seq.temp$twopt<-input.seq$twopt
-    rf.temp<-get_vec_rf_in(seq.temp, acum=FALSE)
-    ## estimate parameters for all possible linkage phases for this order
-    final.map<-est_map_hmm_f2(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord[i+1,]]),
-                              rf.vec=rf.temp,
-                              verbose=FALSE,
-                              tol=tol)
-    ord.rf[i+1,] <- final.map$rf
-    ord.like[i+1] <- final.map$loglike
+    ## seq.temp$twopt<-input.seq$twopt
+    seq.temp$freqs=freqs  
+    ## rf.temp<-get_vec_rf_in(seq.temp, acum=FALSE)
+    ## ## estimate parameters for all possible linkage phases for this order
+    ## final.map<-est_map_hmm_bc(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord[i+1,]]),
+    ##                           rf.vec=rf.temp,
+    ##                           verbose=FALSE,
+    ##                           tol=tol,
+    ##                           freqs=freqs)
+    final.map = map(seq.temp)  
+    ord.rf[i+1,] <- final.map$seq.rf
+    ord.like[i+1] <- final.map$seq.like
   }
   ## positioning after the given sequence
   ## create last order
@@ -193,13 +200,17 @@ try_seq_inbred <- function(input.seq,mrk,tol=10E-2,pos= NULL,verbose=FALSE)
   if(verbose) cat("TRY",length(input.seq$seq.num)+1,": ", c(input.seq$seq.num,mrk) ,"\n")
   else cat(".\n")
   utils::flush.console()
-  ## estimate parameters for all possible linkage phases for this order
-  final.map<-est_map_hmm_f2(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord[length(input.seq$seq.num)+1,]]),
-                            rf.vec=rf.temp,
-                            verbose=FALSE,
-                            tol=tol)
-  ord.rf[length(input.seq$seq.num)+1,] <- final.map$rf
-  ord.like[length(input.seq$seq.num)+1] <- final.map$loglike
+  seq2 = make_seq(get(input.seq$twopt), arg = try.ord[length(input.seq$seq.num)+1,])
+  seq2$freqs = freqs  
+  ## ## estimate parameters for all possible linkage phases for this order
+  ## final.map<-est_map_hmm_bc(geno=t(get(input.seq$data.name, pos=1)$geno[,try.ord[length(input.seq$seq.num)+1,]]),
+  ##                           rf.vec=rf.temp,
+  ##                           verbose=FALSE,
+  ##                           tol=tol,
+  ##                           freqs=freqs)
+  final.map = map(seq2)
+  ord.rf[length(input.seq$seq.num)+1,] <- final.map$seq.rf
+  ord.like[length(input.seq$seq.num)+1] <- final.map$seq.like
   ## calculate LOD-Scores (best linkage phase combination for each position)
   LOD <- (ord.like-max(ord.like))/log(10)
   ord<-vector("list", nrow(try.ord))
